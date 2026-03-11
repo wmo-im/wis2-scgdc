@@ -90,7 +90,7 @@ if iut is None or not other_gdcs:
     LOGGER.warning(msg)
 
 print(f'IUT: {iut}')
-print(f'Other GDCs: {other_gdcs}')
+print(f'Other GDCs: {other_gdcs.keys()}')
 
 for wcmp2 in glob(f'{iut}/*.json'):
     LOGGER.info(f'Checking {wcmp2}')
@@ -100,16 +100,25 @@ for wcmp2 in glob(f'{iut}/*.json'):
             ts = WMOCoreMetadataProfileTestSuite2(data)
             ts.run_tests()
         except Exception as err:
+            import traceback
+            print(traceback.format_exc())
             print(f'ERROR on {wcmp2}: {err}')
             continue
 
         for key in other_gdcs.keys():
             if data['id'] not in other_gdcs[key]:
-                print(f'ERROR: NOT in {key}')
+                print(f"ERROR: {data['id']} NOT in {key}")
                 continue
 
             data2 = prepare_record(other_gdcs[key][data['id']])
 
+            LOGGER.info(f"Comparing {iut}/{data['id']} and {key}/{other_gdcs[key][data['id']]['id']}")  # noqa
+
             diff_ = diff(data, data2)
             if diff_:
+                msg = f"Variation between {iut}/{data['id']} and {key}/{other_gdcs[key][data['id']]['id']}"  # noqa
+                LOGGER.info(msg)
+                print(msg)
                 print(diff_)
+            else:
+                LOGGER.info('Records are identical')
